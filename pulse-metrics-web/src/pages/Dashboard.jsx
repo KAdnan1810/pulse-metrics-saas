@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import API from '../api/client';
 import { Navbar } from '../components/Navbar';
-import { Zap, ShieldCheck, Database, RefreshCw, AlertCircle } from 'lucide-react';
+import { Zap, ShieldCheck, Database, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export const Dashboard = () => {
     const [metrics, setMetrics] = useState(null);
@@ -24,12 +24,25 @@ export const Dashboard = () => {
         fetchMetrics();
     }, []);
 
+    // Auto-dismiss notification after 4 seconds
+    useEffect(() => {
+        if (pingStatus) {
+            const timer = setTimeout(() => {
+                setPingStatus(null);
+            }, 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [pingStatus]);
+
     const handleTestPing = async () => {
         setPinging(true);
         setPingStatus(null);
         try {
             const res = await API.post('/metrics/ping');
-            setPingStatus({ type: 'success', msg: typeof res.data === 'string' ? res.data : 'Ping successful!' });
+            setPingStatus({
+                type: 'success',
+                msg: typeof res.data === 'string' ? res.data : 'Ping successful! Tracked with Redis.'
+            });
             fetchMetrics();
         } catch (err) {
             const errorMsg = err.response?.data?.message
@@ -41,10 +54,12 @@ export const Dashboard = () => {
                 type: 'error',
                 msg: errorMsg
             });
+            fetchMetrics();
         } finally {
             setPinging(false);
         }
     };
+
     if (loading) return <div className="p-8 text-center text-slate-400">Loading live SaaS metrics...</div>;
 
     return (
@@ -52,7 +67,7 @@ export const Dashboard = () => {
             <Navbar />
 
             <main className="max-w-6xl mx-auto px-6 mt-8">
-                {/* Top Action & Status Bar */}
+                {/* Top Header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-100">API Usage & Rate Limiting</h1>
@@ -79,13 +94,21 @@ export const Dashboard = () => {
                     </div>
                 </div>
 
+                {/* Floating / Auto-dismiss Notification Alert */}
                 {pingStatus && (
-                    <div className={`p-4 rounded-xl mb-6 flex items-center space-x-3 border ${pingStatus.type === 'success'
+                    <div className={`p-4 rounded-xl mb-6 flex items-center justify-between border transition-all duration-300 ${pingStatus.type === 'success'
                         ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                         : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
                         }`}>
-                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                        <span className="text-sm">{pingStatus.msg}</span>
+                        <div className="flex items-center space-x-3">
+                            {pingStatus.type === 'success' ? (
+                                <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                            ) : (
+                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                            )}
+                            <span className="text-sm font-medium">{pingStatus.msg}</span>
+                        </div>
+                        <span className="text-xs text-slate-500">auto-closes in 4s</span>
                     </div>
                 )}
 
@@ -122,7 +145,7 @@ export const Dashboard = () => {
                             <Zap className="w-5 h-5 text-indigo-400" />
                         </div>
                         <p className="text-3xl font-bold text-indigo-400">{metrics?.quotaUsagePercentage}%</p>
-                        <p className="text-xs text-slate-500 mt-2">Redis atomic counter status: Active</p>
+                        <p className="text-xs text-slate-500 mt-2">Status: Active</p>
                     </div>
                 </div>
 
