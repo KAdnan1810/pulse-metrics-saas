@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@CrossOrigin(origins = { "http://localhost:5173", "https://pulse-metrics-saas.vercel.app" }, allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/v1/metrics")
 @RequiredArgsConstructor
@@ -44,14 +45,14 @@ public class MetricsController {
         double usagePercentage = ((double) currentUsage / sub.getMonthlyQuota()) * 100.0;
 
         List<ApiUsageLog> logs = apiUsageLogRepository.findTop50ByOrganizationIdOrderByCreatedAtDesc(orgId);
-        List<DashboardMetricsResponse.LogDto> logDtos = logs.stream().map(log ->
-                DashboardMetricsResponse.LogDto.builder()
+        List<DashboardMetricsResponse.LogDto> logDtos = logs.stream()
+                .map(log -> DashboardMetricsResponse.LogDto.builder()
                         .endpoint(log.getEndpoint())
                         .statusCode(log.getStatusCode())
                         .responseTimeMs(log.getResponseTimeMs())
                         .timestamp(log.getCreatedAt())
-                        .build()
-        ).collect(Collectors.toList());
+                        .build())
+                .collect(Collectors.toList());
 
         DashboardMetricsResponse response = DashboardMetricsResponse.builder()
                 .planName(sub.getPlanType().name())
