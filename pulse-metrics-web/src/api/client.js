@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:8080/api/v1',
+  baseURL: 'https://pulse-metrics-saas.onrender.com/api/v1',
 });
 
 // Auto-inject JWT token in every request
