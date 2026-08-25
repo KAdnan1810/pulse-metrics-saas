@@ -24,7 +24,7 @@ jobs:
           maven-version: 3.9.6
 
       - name: Build Backend with Maven
-        working-directory: ./pulse-metrics-api
+        working-directory: ./pulse-metrics-api/pulse-metrics-api
         run: mvn clean package -DskipTests
 
   frontend-build:
