@@ -29,19 +29,22 @@ export const Dashboard = () => {
         setPingStatus(null);
         try {
             const res = await API.post('/metrics/ping');
-            setPingStatus({ type: 'success', msg: res.data });
-            fetchMetrics(); // Refresh stats
+            setPingStatus({ type: 'success', msg: typeof res.data === 'string' ? res.data : 'Ping successful!' });
+            fetchMetrics();
         } catch (err) {
+            const errorMsg = err.response?.data?.message
+                || (typeof err.response?.data === 'string' ? err.response?.data : null)
+                || err.message
+                || 'Rate limit exceeded or server error';
+
             setPingStatus({
                 type: 'error',
-                msg: err.response?.data || 'Rate limit exceeded or server error'
+                msg: errorMsg
             });
-            fetchMetrics();
         } finally {
             setPinging(false);
         }
     };
-
     if (loading) return <div className="p-8 text-center text-slate-400">Loading live SaaS metrics...</div>;
 
     return (
